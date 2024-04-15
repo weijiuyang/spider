@@ -1,0 +1,9 @@
+*.out
+*.log
+**/__pycache__
+*.pyc
+__pycache__/
+*.xlsx
+*.zip
+*.deb
+**/images
