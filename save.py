@@ -12,17 +12,18 @@ import requests
 # from headers import get_ua
 import re
 import math
-import time 
+import time,json
 from key import keys
 from bs4 import BeautifulSoup
 from pyexiv2 import Image
-from remove import remove
+from config import *
 import time
-from  retrying import retry
+import redis
 
-#基础配置
-path=r"/home/vajor/images"   
-backpath=r"/home/vajor/backup"  
+
+
+# records = red.hgetall(code)
+# exit()
 
 
 # attempts, delay这两个参数是必填的
@@ -33,6 +34,11 @@ def stop_f(attempts, delay):
 # @retry(stop_func=stop_f,stop_max_attempt_number=5)
 def save_suit(headers, title, link, html_short):
     s = requests.session()
+    red12 = redis.Redis(host='localhost', port=6379, db=12) #column
+    red13 = redis.Redis(host='localhost', port=6379, db=13) #mnname
+    red14 = redis.Redis(host='localhost', port=6379, db=14) #keywords
+    red15 = redis.Redis(host='localhost', port=6379, db=15) #description
+
     s.keep_alive = False
 
     print("save_suit")
@@ -47,89 +53,59 @@ def save_suit(headers, title, link, html_short):
     page_all_count=1   
     #查找是否重复，不重复的话创立文件夹
     title = title.replace(".","_")
-    dirs=path+"/%s"%title
-    backdirs=backpath+"/%s"%title
+    dirs = os.path.join(path, title)
     print(dirs)
-    print("true or false exist current dirs ",os.path.exists(dirs))
-    remove("b")
-    print("true or false exist current dirs ",os.path.exists(dirs))
 
-    if not os.path.exists(backdirs) and not os.path.exists(dirs):
+    if False or not os.path.exists(dirs):
         print(dirs)
         # exit()
-        begin=time.time()      
-        os.makedirs(dirs)      
+        begin=time.time()    
+        if os.path.exists(dirs):  
+            os.makedirs(dirs)      
         for pagee in range(0,pages):    
             #获得每一篇链接
             if pagee == 0:
                 suit_link=html_short+link
-                print(title)
-                print(suit_link)
-                print("1111111111111")
-
             else:
-                print("2222222222222")
-
                 suit_link=html_short+link[0:-5]+"_%s"%pagee+".html"
             try:
-                print("3333333333333")
-                print(suit_link)
                 r = requests.get(suit_link, headers=headers,verify = False)  # 向目标url地址发送get请求，返回一个response对象
                 r.encoding='utf-8'   
             except Exception as e:
-                print("444444444444")
-                print(e)
                 time.sleep(2)
                 # 当重试完成后还未成功，则返回超时
                 raise TimeoutError
-            print("5555555555555")
-
-            # print(r.text)
-            # exit(0)
-            #获取每一篇关键字
             text=BeautifulSoup(r.text, 'html.parser')
-            print("6",pagee)
-
-            # print(text)
-            # print(text.head)
-            # exit(0)
-            if pagee ==0:
+            if pagee == 0:
                 keywords,description,column,mnname=keys(text)
                 print(keywords,description,column,mnname)
-                print("7")
-            print('6.5')
+                print('tttt')
+                print(' '.join(keywords))
+                print(description)
+                red12.set(title, column)
+                red13.set(title, mnname)
+                red14.set(title, ' '.join(keywords))
+                red15.set(title, description)
+                print('pppp')
+                print(red12.get(title))
+                print(red13.get(title))
+                print(red14.get(title))
+                print(red15.get(title))
+
             #保存每一篇对三张图片
             all_image= text.find_all('img')                        
             one_page_imgs=min(len(all_image),4)
-            print("8")
-
             for item in range(1,one_page_imgs):
                 #获得当前进度
                 sys.stdout.write('\r%s%%'%(round(100*page_all_count/pages_all,2)))
                 sys.stdout.flush()
                 one_image=img_short+all_image[item]['src']
-                print(one_image)
-                print('9')
-                # print(str(img_short+all_image[item]['onload']))
-                print('10')
                 if len(all_image[item]['src'])<30:
-                    print('11')
-
                     continue
-                #。  print(one_image)
-                # if one_image[-2]=='p':
-                #写每一张图片
-                print('12')
-
                 try:
-                    print('13')
                     image=requests.get(url=one_image,headers=headers,verify = False)
-                    print('14')
-
-
-                    imgs_name=dirs+'/%s_%s_%s'%(title,str(page_all_count),pagee+1)+".jpg"
+                    imgs_name=dirs+'/%s_%s'%(title,str(page_all_count))+".webp"
                     f = open(imgs_name, 'wb')    
-                    # print(one_image)
                     f.write(image.content)
                     f.close() 
                     #写入图片关键字和其他信息
@@ -145,26 +121,16 @@ def save_suit(headers, title, link, html_short):
                     page_all_count+=1
                 except Exception as e:
                     print('15')
-
                     time.sleep(2)
-
                     print(e)
                 # 当重试完成后还未成功，则返回超时
                     raise TimeoutError
-
-
         print('100 %')
-        
+        preimg = f'{previewpath}/{title}.webp'
+        f = open(preimg, 'wb')    
+        f.write(image.content)
+        f.close() 
         #记录保存套图 用时
         end=time.time()
         last=end-begin
         print(round(last,2))
-
-        
-        
-        
-        
-        
-        
-        
-        

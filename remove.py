@@ -10,7 +10,7 @@ import shutil
 import os
 import re
 import sys
-from spidersetting import *
+from config  import *
 
 
 def remove(model, photodir = None):

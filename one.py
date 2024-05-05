@@ -16,9 +16,6 @@ import urllib3
 urllib3.disable_warnings()
 ssl._create_default_https_context = ssl._create_unverified_context
 
-#基础配置
-path=r"/home/vajor/images"   
-backpath=r"/home/vajor/backup"  
 # headers = get_ua()
 # headers['Referer']="https://www.jpxgmn.com/"
 headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/18.17763",
@@ -26,7 +23,7 @@ headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit
 
 
 #爬取一个人的全部图片配置
-name_list=['唐婉儿','徐微微','芝芝','绯月樱','杨晨晨','糯美子','徐cake','恩率babe','yoo优优','王梓童']
+name_list=['唐婉儿','徐微微','芝芝','绯月樱','杨晨晨','糯美子','徐cake','恩率babe','yoo优优','王梓童','张思允','鱼子酱']
 name_list=['张思允']
 html_search=r'https://www.xgmn09.com/plus/search/index.asp?keyword='
 html_search=r'https://www.xgmn09.com/plus/search/'
@@ -64,11 +61,6 @@ for name in name_list:
             backdirs=backpath+"/%s"%title
             if not os.path.exists(backdirs):
                 save_suit(headers,title,link,html_short) 
-            # else:
-                # break
-        # else:
-        #     continue
-        # break
 
 
             
