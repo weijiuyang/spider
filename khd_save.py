@@ -19,7 +19,6 @@ from config import *
 
 
 def save_suit(headers, title, link):
-    # print(headers)
     print('true link start')
 
     print(link)
@@ -27,19 +26,28 @@ def save_suit(headers, title, link):
     # exit()
     #找到一共多少张图片
     reg="[0-9]+photos"
+    # 正则表达式来匹配文本
+    pattern = re.compile(r"\[(\d+MB)-(\d+)photos\]")
+
+    # 在文本中搜索匹配项
+    match = pattern.search(title)
+
+    if match:
+        mb_size = match.group(1)
+        photo_count = match.group(2)
+        print(f"MB Size: {mb_size}, Photo Count: {photo_count}")
+    else:
+        print("No match found")
     pages_group=re.search(reg,title)
     if pages_group ==  None:
         return 
-    pages_all=int(pages_group.group()[:-6])
-    pages=math.ceil(pages_all/20)
-    page_all_count=1   
+    pages_all = int(photo_count)
+    page = math.ceil(pages_all/20)
+    page_all_count = 1   
     print(pages)
     dirs = path+"/%s"%title
 
     print(dirs)    
-    if not os.path.exists(dirs):
-        os.makedirs(dirs)     
-
     begin=time.time()
     for pagee in range(0,pages):    
         #获得每一篇链接
@@ -48,15 +56,19 @@ def save_suit(headers, title, link):
         else:
             suit_link=link + "/%s" % pagee
         print(suit_link)
-        r = requests.get(suit_link, headers = headers,verify = False)  # 向目标url地址发送get请求，返回一个response对象
-        r.encoding='utf-8'   
-        print(r.text)
-        print('hhhhhh')
-        # exit(0)
 
+        proxy_url = f"{origin}?url={suit_link}"
 
-        #获取每一篇关键字
-        text=BeautifulSoup(r.text, 'html.parser')
+        album_name = proxy_url.split('/')[-1].split('.')[0]
+        print(album_name)
+        response = requests.get(proxy_url)
+        print(response.status_code)
+        # print(response.text)
+        remote_content = response.content  # 这是从远程服务器获取的原始字节数据
+
+        # 解码字节数据
+        decoded_content = remote_content.decode('utf-8')
+        text=BeautifulSoup(decoded_content, 'html.parser')
 
         pretty_html = text.prettify()
 
@@ -68,32 +80,39 @@ def save_suit(headers, title, link):
         with open(f"{file_path}/pretty_file.html", "w", encoding="utf-8") as file:
             file.write(pretty_html)  # Save the pretty HTML to another file
 
-        # print(text)
-        # print(text.head)
-        # exit(0)
-        # if pagee ==0:
-        #     keywords,description,column,mnname=keys(text)
-        #     print(keywords,description,column,mnname)
-        #保存每一篇对三张图片
-        print('gggg', one_image)
 
-        all_image = text.find_all('figure')    
-        # print(all_image)
-        # print(len(all_image))
-        # exit()                    
-        # one_page_imgs = min(len(all_image),4)
-        for item in range(0, len(all_image)):
+        # 仅选择在特定类下的 <a> 标签
+        img_sources = [img['src'] for img in text.find_all('img') if img.get('src')]
+        all_image = []
+        # # 打印所有找到的 src 属性值
+        # for src in img_sources:
+        #     if album_name in src:
+        #         print(src, album_name)
+        #         all_image.append(src)
+        all_image = img_sources[:20]
+        print(len(all_image))
+        print('4444444444')
+        # exit()
+        for one_image in all_image:
             #获得当前进度
             sys.stdout.write('\r%s%%'%(round(100*page_all_count/pages_all,2)))
             sys.stdout.flush()
-            one_image=all_image[item].a['src']
             # if len(all_image[item]['src'])<30:
             #     continue
+            print('33333333333333')
             print('fffff', one_image)
-            exit()
-            image=requests.get(url=one_image,headers=headers,verify = False)
-            imgs_name=dirs+'//%s_%s_%s'%(title,str(page_all_count),pagee+1)+".jpg"
-
+            # exit()
+            proxy_one_url = f"{origin}?url={one_image}"
+            print('kkkkkk')
+            print(proxy_one_url)
+            image = requests.get(proxy_one_url)
+            remote_content = response.content
+            # image=requests.get(url=one_image,headers=headers,verify = False)
+            # imgs_name=dirs+'/%s_%s_%s'%(title,str(page_all_count),pagee+1)+".webp"
+            # imgs_name=dirs+'/%s_%s'%(title,str(page_all_count))+".webp"
+            imgs_name=f'{dirs}/{page_all_count}.webp'
+            
+            print(imgs_name)
             f = open(imgs_name, 'wb')    
             # print(one_image)
             f.write(image.content)

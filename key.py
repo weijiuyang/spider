@@ -6,15 +6,17 @@ Created on Mon Sep 28 20:40:02 2020
 @author: vajorstack
 """
 import re
+from oneapi import openai
+import json
 
-def keys(text):
+from config import *
+def keys(title, text):
 
     key=text.select('meta[name="keywords"]')[0]['content'].split(',')
-    title = text.head.title.text.split('_')[1]
 
     description=text.select('meta[name="description"]')[0]['content'].split('    ')[-1]
     print(key)
-    column=key[2]
+    column=key[0]
     pattern = r'\d+'
     match = re.search(pattern,column)
     institutions = {'尤果网':'尤果网','ugirls':'尤果网','果团网':'果团网','girlt':'果团网','喵糖映画':'喵糖映画',\
@@ -50,7 +52,8 @@ def keys(text):
     print("key  5")
     change_name_list={"恩率babe":"徐cake","恩率":"徐cake"}
     if mnname in change_name_list:
-        mnname=change_name_list[mnname]
+        mnname = change_name_list[mnname]
+    mnname = mnname.replace('模特', '')
     print("key  6")
 
     in_list=['黄色','白丝','户外','黑色','白色','粉色','吊带','浴室','蕾丝','翘臀','清纯','粉红','兔女郎','居家','红色','情趣','真空','女仆','情人节','护士',\
@@ -79,4 +82,107 @@ def keys(text):
                 
                 
                 
+def key_girl(title):
+
+    column = column.lower()
+    print(column)
+    institution_name = '自摄'
+    for institution in institutions:
+        if institution in title:
+            institution_name = institutions[institution]
+            break
+
+    print("key  3")
+    print(institution_name)
+    print(institution_name.lower())
+    institution_name = institution_name.lower()
+    print(institution_name)
+    print("key  4")
+
+    girlname_list = ['Yeha']
+
+    res_name =  None
+    for girlname in girlname_list:
+        if girlname in title:
+            res_name = girlname
+
+    change_name_list={"恩率babe":"徐cake","恩率":"徐cake", "鱼子酱fish":"鱼子酱"}
+    if res_name in change_name_list:
+        res_name = change_name_list[res_name]
+    res_name = res_name.replace('模特', '')
                 
+    return institution_name, girlname
+                
+
+
+def ai_key(title):
+    for one in remove_list :
+        title = title.replace(one, '')
+    result = openai(f'提取出来下面摄影作品的出品方,作品编号,作品名字,人物名字, 一定有人物名字,不一定有作品名字给出json字符串,键为public, number, bookname,  personname,作品如下{title}')
+    print(result['choices'][0]['message'])
+    print(result['choices'][0]['message']['content'])
+    content = result['choices'][0]['message']['content']
+    # print(type(content))
+    # content = eval(content)
+    # print(type(content))
+    content = json.loads(content)
+    if 'public' in content:
+        public = content['public']
+    else:
+        public = 'common'
+    number_string = content['number']
+    for wrong_str in ['MB', 'mb','photo']:
+        if wrong_str in number_string :
+            public_no = ''
+            break
+    else:
+        result = openai(f'提取出来真正的作品编号{number_string}')
+        print(result['choices'][0]['message'])
+        print(result['choices'][0]['message']['content'])
+        no_content = result['choices'][0]['message']['content']
+        print(no_content)
+        pattern = re.compile(r'\d+')
+        match = pattern.search(no_content)
+        if match:
+            public_no = match.group(0)
+            print(f"Extracted number: {public_no}")
+        else:
+            print("No number found in the string")
+
+    girlname = content['personname']
+    if not girlname:
+        girlname = public
+    res_name =  girlname
+    for k, v in girlname_dict.items():
+        if k in girlname:
+            res_name = v
+
+    for k, v in girlname_dict.items():
+        if k in public:
+            public = v
+
+    public_no = None
+    
+    if public == girlname:
+        public = res_name
+        public_no = ''
+
+    if public == res_name:
+        public_no = ''
+
+    bookname = content['bookname']
+    if bookname:
+        bookname = bookname.split('[')[0]
+    keywords = []
+    for one in keywords_list:
+        if one in bookname:
+            keywords.append(one)
+    print(f"Public: {public}")
+    print(f"Public Number: {public_no}")
+    print(f"Book Name: {bookname}")
+    print(f"girl Name: {res_name}")
+    return public, public_no, bookname, res_name, keywords
+
+
+if __name__ == "__main__":
+    ai_key('[Xiuren秀人网]2023.09.15 NO.7396 小逗逗[433MB-77photos]')

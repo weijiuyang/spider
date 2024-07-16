@@ -1,0 +1,15 @@
+{
+    "run_type": "client",
+    "local_addr": "127.0.0.1",
+    "local_port": 1080,
+    "remote_addr": "120.226.28.208",
+    "remote_port": 41392,
+    "password": [
+        "Mnp689TH2v"
+    ],
+    "ssl": {
+        "sni": "v.qq.com",
+        "verify": false,
+        "cert": ""
+    }
+}

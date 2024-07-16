@@ -1,0 +1,38 @@
+{
+    "log_level": 3,
+    "log_file": "/home/vajor/trojan-go/trojan-go.log",
+    "run_type": "client",
+    "local_addr": "127.0.0.1",
+    "local_port": 1080,
+    "remote_addr": "120.226.28.208",
+    "remote_port": 443,
+    "password": [
+        "Mnp689TH2v"
+    ],
+    "ssl": {
+        "sni": "v.qq.com",
+        "verify": false,
+        "cert": ""
+    },
+    "mux": {
+        "enabled": true
+    },
+    "router": {
+        "enabled": true,
+        "bypass": [
+            "geoip:cn",
+            "geoip:private",
+            "geosite:cn",
+            "geosite:private"
+        ],
+        "block": [
+            "geosite:category-ads"
+        ],
+        "proxy": [
+            "geosite:geolocation-!cn"
+        ],
+        "default_policy": "proxy",
+        "geoip": "/home/vajor/trojan-go/geoip.dat",
+        "geosite": "/home/vajor/trojan-go/dlc.dat"
+    }
+}
